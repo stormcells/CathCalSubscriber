@@ -81,3 +81,11 @@ def lambda_handler(event, context):
 
     else:
         print('Payload contained no key words')
+
+
+# remove below for deployment
+def main():
+    lambda_handler(None, None)
+
+
+main()
