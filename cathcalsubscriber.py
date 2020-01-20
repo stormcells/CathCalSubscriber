@@ -6,8 +6,9 @@ import os
 def lambda_handler(event, context):
     print('Received event: ', event)
 
-    confirm_keyword = os.environ['confirmKeyword'].lower()
-    unsubscribe_keyword = os.environ['unsubscribeKeyword'].lower()
+    confirm_keyword = os.environ['confirmKeyword'].lower() if 'confirmKeyword' in os.environ else 'default_confirm_key'
+    unsubscribe_keyword = os.environ[
+        'unsubscribeKeyword'].lower() if 'unsubscribeKeyword' in os.environ else 'default_unsubscribe_key'
 
     message = list(event.values())[0][-1].get('Sns').get('Message')
     print('message: ', message)
