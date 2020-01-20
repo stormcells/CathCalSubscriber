@@ -6,13 +6,16 @@ import os
 def subscribe(origination_number, client):
     print('Subscribe: ', origination_number)
 
-    response = client.subscribe(
-        TopicArn=os.environ['ARN_TOPIC'],
-        Protocol='sms',
-        Endpoint=origination_number,
-        ReturnSubscriptionArn=True
-    )
-    print(response)
+    if 'ARN_TOPIC' in os.environ:
+        response = client.subscribe(
+            TopicArn=os.environ['ARN_TOPIC'],
+            Protocol='sms',
+            Endpoint=origination_number,
+            ReturnSubscriptionArn=True
+        )
+        print(response)
+    else:
+        print('Would have subscribed: ', origination_number)
 
 
 def unsubscribe(origination_number, client):
@@ -20,31 +23,34 @@ def unsubscribe(origination_number, client):
 
     arn = get_arn_from_origination_number(origination_number, client)
 
-    if arn != '':
+    if arn is not None:
         response = client.unsubscribe(
             SubscriptionArn=arn
         )
         print(response)
     else:
-        print('Could not identify ARN to unsubscribe for: ', origination_number)
+        print('Did not identify ARN to unsubscribe for: ', origination_number)
 
 
 def get_arn_from_origination_number(origination_number, client):
-    response = client.list_subscriptions_by_topic(
-        TopicArn=os.environ['ARN_TOPIC']
-    )
-    print(response)
+    if 'ARN_TOPIC' in os.environ:
+        response = client.list_subscriptions_by_topic(
+            TopicArn=os.environ['ARN_TOPIC']
+        )
+        print(response)
 
-    all_arns = list(response.values())[0]
+        all_arns = list(response.values())[0]
 
-    for i in range(len(all_arns)):
-        subscription = all_arns[i]
-        phone_number = subscription.get('Endpoint')
+        for i in range(len(all_arns)):
+            subscription = all_arns[i]
+            phone_number = subscription.get('Endpoint')
 
-        if phone_number == origination_number:
-            arn_to_be_unsubscribed = subscription.get('SubscriptionArn')
-            print('arn: ', arn_to_be_unsubscribed)
-            return arn_to_be_unsubscribed
+            if phone_number == origination_number:
+                arn_to_be_unsubscribed = subscription.get('SubscriptionArn')
+                print('arn: ', arn_to_be_unsubscribed)
+                return arn_to_be_unsubscribed
+    else:
+        print('Would have retrieved subscription arn from origination number: ', origination_number)
 
     return None
 
@@ -69,7 +75,9 @@ def lambda_handler(event, context):
 
     if message_body.find(confirm_keyword) != -1:
         subscribe(origination_number, client)
+
     elif message_body.find(unsubscribe_keyword) != -1:
         unsubscribe(origination_number, client)
+
     else:
         print('Payload contained no key words')
