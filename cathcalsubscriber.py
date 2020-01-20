@@ -13,11 +13,23 @@ def subscribe(origination_number, client):
         ReturnSubscriptionArn=True
     )
     print(response)
-    return response
 
 
 def unsubscribe(origination_number, client):
     print('Unsubscribe: ', origination_number)
+
+    arn = get_arn_from_origination_number(origination_number, client)
+
+    if arn != '':
+        response = client.unsubscribe(
+            SubscriptionArn=arn
+        )
+        print(response)
+    else:
+        print('Could not identify ARN to unsubscribe for: ', origination_number)
+
+
+def get_arn_from_origination_number(origination_number, client):
     response = client.list_subscriptions_by_topic(
         TopicArn=os.environ['ARN_TOPIC']
     )
@@ -25,7 +37,6 @@ def unsubscribe(origination_number, client):
 
     all_arns = list(response.values())[0]
 
-    arn_to_be_unsubscribed = ''
     for i in range(len(all_arns)):
         subscription = all_arns[i]
         phone_number = subscription.get('Endpoint')
@@ -33,14 +44,9 @@ def unsubscribe(origination_number, client):
         if phone_number == origination_number:
             arn_to_be_unsubscribed = subscription.get('SubscriptionArn')
             print('arn: ', arn_to_be_unsubscribed)
+            return arn_to_be_unsubscribed
 
-    if arn_to_be_unsubscribed != '':
-        response = client.unsubscribe(
-            SubscriptionArn=arn_to_be_unsubscribed
-        )
-
-    print(response)
-    return response
+    return None
 
 
 def lambda_handler(event, context):
